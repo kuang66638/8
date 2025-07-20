@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扬尘点菜</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF5722',
+                        secondary: '#FFB74D',
+                        accent: '#FF9800',
+                        dark: '#333333',
+                        light: '#F5F5F5'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 导航栏 -->
+    <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-md shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-cutlery text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-dark">扬尘<span class="text-primary">点菜</span></h1>
+            </div>
+            
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#home" class="font-medium hover:text-primary transition-colors">首页</a>
+                <a href="#categories" class="font-medium hover:text-primary transition-colors">菜品分类</a>
+                <a href="#specials" class="font-medium hover:text-primary transition-colors">今日推荐</a>
+                <a href="#about" class="font-medium hover:text-primary transition-colors">关于我们</a>
+            </nav>
+            
+            <!-- 移动端菜单按钮 -->
+            <button id="menu-toggle" class="md:hidden text-dark hover:text-primary transition-colors">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+            
+            <!-- 购物车按钮 -->
+            <button id="cart-btn" class="relative flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                <i class="fa fa-shopping-cart text-primary"></i>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+            </button>
+        </div>
+        
+        <!-- 移动端导航菜单 -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-100 shadow-lg">
+            <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+                <a href="#home" class="py-2 px-4 hover:bg-gray-50 rounded-lg transition-colors">首页</a>
+                <a href="#categories" class="py-2 px-4 hover:bg-gray-50 rounded-lg transition-colors">菜品分类</a>
+                <a href="#specials" class="py-2 px-4 hover:bg-gray-50 rounded-lg transition-colors">今日推荐</a>
+                <a href="#about" class="py-2 px-4 hover:bg-gray-50 rounded-lg transition-colors">关于我们</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 购物车侧边栏 -->
+    <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+        <div class="flex flex-col h-full">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-bold">我的购物车</h2>
+                <button id="close-cart" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- 购物车项目将在这里动态添加 -->
+                <div class="text-center text-gray-500 py-10">
+                    <i class="fa fa-shopping-cart text-4xl mb-3 opacity-30"></i>
+                    <p>购物车是空的</p>
+                    <p class="text-sm mt-1">添加一些菜品开始点餐吧</p>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="font-medium">总计</span>
+                    <span id="cart-total" class="text-xl font-bold text-primary">¥0.00</span>
+                </div>
+                <button id="checkout-btn" class="w-full bg-primary hover:bg-primary/90 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
+                    <i class="fa fa-check-circle"></i>
+                    <span>去结算</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <main class="pt-16">
+        <!-- 英雄区域 -->
+        <section id="home" class="relative h-[80vh] flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 z-0">
+                <img src="https://picsum.photos/id/1080/1920/1080" alt="美食背景" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/50"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 z-10 text-center">
+                <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-white mb-4 leading-tight text-shadow">
+                    享受<span class="text-primary">美食</span>，享受生活
+                </h1>
+                <p class="text-[clamp(1rem,2vw,1.25rem)] text-white/90 mb-8 max-w-2xl mx-auto">
+                    精选食材，独特烹饪，尽在扬尘点菜
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#categories" class="bg-primary hover:bg-primary/90 text-white py-3 px-8 rounded-lg font-medium transition-all transform hover:scale-105">
+                        立即点餐
+                    </a>
+                    <a href="#about" class="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white py-3 px-8 rounded-lg font-medium transition-all transform hover:scale-105">
+                        了解更多
+                    </a>
+                </div>
+            </div>
+            
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <a href="#categories" class="text-white/80 hover:text-white">
+                    <i class="fa fa-angle-down text-3xl"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- 特色服务 -->
+        <section class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">我们的特色</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">为什么选择扬尘点菜？我们提供最优质的食材和服务，让您的用餐体验更加美好</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-light rounded-xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-leaf text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">新鲜食材</h3>
+                        <p class="text-gray-600">我们每天从当地农场采购最新鲜的蔬菜和肉类，确保您吃到的每一口都是健康和美味。</p>
+                    </div>
+                    
+                    <div class="bg-light rounded-xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-clock-o text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">快速配送</h3>
+                        <p class="text-gray-600">专业配送团队，保证您的美食在最短的时间内送达，让您无需等待即可享受美味。</p>
+                    </div>
+                    
+                    <div class="bg-light rounded-xl p-6 shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-star text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">专业厨师</h3>
+                        <p class="text-gray-600">我们的厨师团队拥有多年经验，精通各种菜系，为您精心烹饪每一道菜品。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 菜品分类 -->
+        <section id="categories" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">菜品分类</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">浏览我们的各类美食，选择您喜爱的口味</p>
+                </div>
+                
+                <div class="flex overflow-x-auto pb-4 mb-8 space-x-4 scrollbar-hide">
+                    <button class="category-btn active whitespace-nowrap px-6 py-2 rounded-full bg-primary text-white font-medium">全部菜品</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">川菜</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">粤菜</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">湘菜</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">鲁菜</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">闽菜</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">浙菜</button>
+                    <button class="category-btn whitespace-nowrap px-6 py-2 rounded-full bg-white hover:bg-gray-100 font-medium transition-colors">徽菜</button>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- 菜品卡片 -->
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/1.png" alt="红烧牛肉" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-2 py-1 rounded">招牌</div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">红烧牛肉</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.9</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">精选牛肉块，配以秘制红烧酱汁，肉质酥烂，香气四溢</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥58.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/2.png" alt="番茄炒蛋" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">番茄炒蛋</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.8</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">新鲜番茄与土鸡蛋炒制而成，酸甜可口，营养丰富</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥18.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/3.png" alt="清炒土豆丝" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">清炒土豆丝</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.7</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">土豆切丝清炒，口感脆爽，咸香适中，下饭必备</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥12.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/4.png" alt="冬瓜肉丸汤" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">冬瓜肉丸汤</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.6</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">冬瓜与猪肉丸熬制的汤品，清甜可口，营养丰富</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥26.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/5.png" alt="水果甜汤" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">水果甜汤</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.9</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">多种新鲜水果熬制的甜汤，清爽可口，美容养颜</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥16.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/6.png" alt="瘦肉水" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">瘦肉水</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.7</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">独特创意菜品，融合多种食材的特色，口感丰富多样</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥32.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/7.png" alt="葱油拌面" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">葱油拌面</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.5</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">手工面条配以香葱油炸制的葱油，香气扑鼻，口感筋道</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥15.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/8.png" alt="白米饭" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">白米饭</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.6</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">精选优质大米，蒸煮出的米饭颗粒饱满，香气四溢</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥3.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/9.png" alt="什锦蛋炒饭" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">什锦蛋炒饭</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.8</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">米饭与鸡蛋、火腿、青豆等食材炒制而成，营养均衡</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥18.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/10.png" alt="清炒双花" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">清炒双花</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.7</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">西兰花与花菜清炒，保留蔬菜原汁原味，清爽可口</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥16.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/11.png" alt="清炒西洋菜" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">清炒西洋菜</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.6</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">新鲜西洋菜清炒，口感脆嫩，营养丰富，清热解火</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥15.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="food-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="relative">
+                            <img src="https://kuang66638.github.io/7/12.png" alt="烤鸡" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 left-3 bg-secondary text-dark text-xs font-bold px-2 py-1 rounded">热门</div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold">烤鸡</h3>
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fa fa-star text-xs"></i>
+                                    <span class="ml-1 text-sm font-medium">4.9</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">整鸡烤制而成，外皮金黄酥脆，肉质鲜嫩多汁</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-primary font-bold">¥68.00</span>
+                                <button class="add-to-cart bg-primary/10 hover:bg-primary/20 text-primary w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-10">
+                    <button class="bg-white hover:bg-gray-50 text-primary border border-primary/30 py-3 px-8 rounded-lg font-medium transition-colors flex items-center justify-center mx-auto">
+                        <span>加载更多</span>
+                        <i class="fa fa-angle-down ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 今日推荐 -->
+        <section id="specials" class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">今日推荐</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">我们厨师长精心准备的特色菜品</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="relative group overflow-hidden rounded-xl shadow-md">
+                        <img src="https://kuang66638.github.io/7/1.png" alt="推荐菜品1" class="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
+                            <span class="text-primary font-bold mb-2">主厨推荐</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">红烧牛肉</h3>
+                            <p class="text-white/80 mb-4 max-w-md">精选上等牛肉，配以多种香料慢火炖煮，肉质酥烂入味，香气四溢</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-white font-bold text-xl">¥58.00</span>
+                                <button class="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                    <i class="fa fa-plus mr-1"></i> 加入购物车
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative group overflow-hidden rounded-xl shadow-md">
+                        <img src="https://kuang66638.github.io/7/12.png" alt="推荐菜品2" class="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
+                            <span class="text-primary font-bold mb-2">限时特惠</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">秘制烤鸡</h3>
+                            <p class="text-white/80 mb-4 max-w-md">选用本地散养土鸡，经秘制酱料腌制后烤制，皮脆肉嫩，香气扑鼻</p>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-white font-bold text-xl">¥68.00</span>
+                                    <span class="text-white/80 line-through text-sm ml-2">¥88.00</span>
+                                </div>
+                                <button class="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                    <i class="fa fa-plus mr-1"></i> 加入购物车
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 关于我们 -->
+        <section id="about" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">关于扬尘点菜</h2>
+                        <p class="text-gray-600 mb-6">
+                            扬尘点菜创立于2020年，是一家专注于为顾客提供优质餐饮服务的餐厅。我们秉承"新鲜、美味、健康"的理念，精选食材，用心烹饪，为您带来难忘的美食体验。
+                        </p>
+                        <p class="text-gray-600 mb-6">
+                            我们的厨师团队拥有多年的烹饪经验，精通各种菜系，不断创新菜品，满足不同顾客的口味需求。无论是家庭聚餐、朋友聚会还是商务宴请，扬尘点菜都是您的理想选择。
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-primary mr-3"></i>
+                                <span>新鲜食材</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-primary mr-3"></i>
+                                <span>专业厨师</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-primary mr-3"></i>
+                                <span>优质服务</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fa fa-check-circle text-primary mr-3"></i>
+                                <span>舒适环境</span>
+                            </div>
+                        </div>
+                        <a href="#categories" class="inline-flex items-center text-primary font-medium hover:underline">
+                            <span>立即点餐</span>
+                            <i class="fa fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <img src="https://picsum.photos/id/292/400/400" alt="餐厅环境" class="rounded-lg shadow-md transform translate-y-8">
+                        <img src="https://picsum.photos/id/431/400/400" alt="新鲜食材" class="rounded-lg shadow-md">
+                        <img src="https://picsum.photos/id/365/400/400" alt="厨师烹饪" class="rounded-lg shadow-md">
+                        <img src="https://picsum.photos/id/315/400/400" alt="精美菜品" class="rounded-lg shadow-md transform translate-y-8">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white pt-16 pb-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                <div>
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fa fa-cutlery text-primary text-2xl"></i>
+                        <h3 class="text-xl font-bold">扬尘<span class="text-primary">点菜</span></h3>
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        精选食材，独特烹饪，尽在扬尘点菜。我们致力于为您提供最优质的餐饮服务和最美味的食物。
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                            <i class="fa fa-weixin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                            <i class="fa fa-weibo text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                            <i class="fa fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+                            <i class="fa fa-youtube-play text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">快速链接</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-gray-400 hover:text-primary transition-colors">首页</a></li>
+                        <li><a href="#categories" class="text-gray-400 hover:text-primary transition-colors">菜品分类</a></li>
+                        <li><a href="#specials" class="text-gray-400 hover:text-primary transition-colors">今日推荐</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-primary transition-colors">关于我们</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">联系我们</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-map-marker text-primary mt-1 mr-3"></i>
+                            <span class="text-gray-400">珠海市斗门区井岸镇江湾西一苑9栋1单元202</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-phone text-primary mr-3"></i>
+                            <span class="text-gray-400">010-12345678</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-envelope text-primary mr-3"></i>
+                            <span class="text-gray-400">contact@yangchengdiancai.com</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-clock-o text-primary mr-3"></i>
+                            <span class="text-gray-400">10:00 - 22:00 每日营业</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">订阅我们</h4>
+                    <p class="text-gray-400 mb-4">
+                        订阅我们的电子邮件，获取最新优惠和活动信息
+                    </p>
+                    <form class="mb-4">
+                        <div class="flex">
+                            <input type="email" placeholder="jerry66638@outlook.com" class="px-4 py-2 bg-gray-800 text-white rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary w-full">
+                            <button type="submit" class="bg-primary hover:bg-primary/90 text-white px-4 rounded-r-lg transition-colors">
+                                <i class="fa fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <p class="text-gray-400 text-sm">
+                        扫描二维码关注公众号，获取更多优惠
+                    </p>
+                    <div class="mt-2 w-24 h-24 bg-gray-800 rounded-lg flex items-center justify-center">
+                        <i class="fa fa-qrcode text-4xl text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 text-sm mb-4 md:mb-0">
+                        &copy; 2025 扬尘点菜. 保留所有权利.
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-primary text-sm transition-colors">隐私政策</a>
+                        <a href="#" class="text-gray-400 hover:text-primary text-sm transition-colors">服务条款</a>
+                        <a href="#" class="text-gray-400 hover:text-primary text-sm transition-colors">网站地图</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 返回顶部按钮 -->
+    <button id="back-to-top" class="fixed bottom-6 right-6 bg-primary text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        <i class="fa fa-angle-up text-xl"></i>
+    </button>
+
+    <!-- JavaScript -->
+    <script>
+        // 导航栏滚动效果
+        const navbar = document.getElementById('navbar');
+        const backToTop = document.getElementById('back-to-top');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('py-2', 'shadow-md');
+                navbar.classList.remove('py-3', 'shadow-sm');
+                backToTop.classList.remove('translate-y-20', 'opacity-0');
+            } else {
+                navbar.classList.add('py-3', 'shadow-sm');
+                navbar.classList.remove('py-2', 'shadow-md');
+                backToTop.classList.add('translate-y-20', 'opacity-0');
+            }
+        });
+        
+        // 移动端菜单切换
+        const menuToggle = document.getElementById('menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // 关闭移动菜单
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+        
+        // 返回顶部按钮
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // 购物车功能
+        const cartBtn = document.getElementById('cart-btn');
+        const closeCart = document.getElementById('close-cart');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const addToCartButtons = document.querySelectorAll('.add-to-cart');
+        const cartCount = document.getElementById('cart-count');
+        const cartItems = document.getElementById('cart-items');
+        const cartTotal = document.getElementById('cart-total');
+        
+        // 打开购物车
+        cartBtn.addEventListener('click', () => {
+            cartSidebar.classList.remove('translate-x-full');
+        });
+        
+        // 关闭购物车
+        closeCart.addEventListener('click', () => {
+            cartSidebar.classList.add('translate-x-full');
+        });
+        
+        // 点击页面其他区域关闭购物车
+        document.addEventListener('click', (e) => {
+            if (e.target === cartSidebar) {
+                cartSidebar.classList.add('translate-x-full');
+            }
+        });
+        
+        // 购物车数据
+        let cart = [];
+        
+        // 添加到购物车
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const foodCard = button.closest('.food-card');
+                const foodName = foodCard.querySelector('h3').textContent;
+                const foodPrice = parseFloat(foodCard.querySelector('.text-primary').textContent.replace('¥', ''));
+                const foodImage = foodCard.querySelector('img').src;
+                
+                // 检查商品是否已在购物车中
+                const existingItemIndex = cart.findIndex(item => item.name === foodName);
+                
+                if (existingItemIndex !== -1) {
+                    // 增加数量
+                    cart[existingItemIndex].quantity += 1;
+                } else {
+                    // 添加新商品
+                    cart.push({
+                        name: foodName,
+                        price: foodPrice,
+                        image: foodImage,
+                        quantity: 1
+                    });
+                }
+                
+                // 更新购物车
+                updateCart();
+                
+                // 添加动画效果
+                button.innerHTML = '<i class="fa fa-check"></i>';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="fa fa-plus"></i>';
+                }, 1000);
+            });
+        });
+        
+        // 更新购物车
+        function updateCart() {
+            // 更新购物车数量
+            cartCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+            
+            // 更新购物车项目
+            if (cart.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="text-center text-gray-500 py-10">
+                        <i class="fa fa-shopping-cart text-4xl mb-3 opacity-30"></i>
+                        <p>购物车是空的</p>
+                        <p class="text-sm mt-1">添加一些菜品开始点餐吧</p>
+                    </div>
+                `;
+            } else {
+                cartItems.innerHTML = '';
+                
+                cart.forEach((item, index) => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'flex items-center space-x-3 p-3 border-b border-gray-100';
+                    itemElement.innerHTML = `
+                        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg">
+                        <div class="flex-1">
+                            <h4 class="font-medium">${item.name}</h4>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-primary font-bold">¥${item.price.toFixed(2)}</span>
+                                <div class="flex items-center">
+                                    <button class="decrease-quantity w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors" data-index="${index}">
+                                        <i class="fa fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="mx-2">${item.quantity}</span>
+                                    <button class="increase-quantity w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors" data-index="${index}">
+                                        <i class="fa fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="remove-item text-gray-400 hover:text-red-500 transition-colors" data-index="${index}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    `;
+                    cartItems.appendChild(itemElement);
+                });
+                
+                // 添加数量增减和删除事件
+                document.querySelectorAll('.decrease-quantity').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const index = parseInt(button.getAttribute('data-index'));
+                        if (cart[index].quantity > 1) {
+                            cart[index].quantity -= 1;
+                        } else {
+                            cart.splice(index, 1);
+                        }
+                        updateCart();
+                    });
+                });
+                
+                document.querySelectorAll('.increase-quantity').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const index = parseInt(button.getAttribute('data-index'));
+                        cart[index].quantity += 1;
+                        updateCart();
+                    });
+                });
+                
+                document.querySelectorAll('.remove-item').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const index = parseInt(button.getAttribute('data-index'));
+                        cart.splice(index, 1);
+                        updateCart();
+                    });
+                });
+            }
+            
+            // 更新总计
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            cartTotal.textContent = `¥${total.toFixed(2)}`;
+        }
+        
+        // 分类切换
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有按钮的active状态
+                categoryBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('bg-white', 'hover:bg-gray-100');
+                });
+                
+                // 添加当前按钮的active状态
+                btn.classList.add('active', 'bg-primary', 'text-white');
+                btn.classList.remove('bg-white', 'hover:bg-gray-100');
+                
+                // 这里可以添加过滤菜品的逻辑
+            });
+        });
+    </script>
+</body>
+</html>
